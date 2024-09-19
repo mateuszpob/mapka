@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
                     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                         location?.let {
                             userLocation = GeoPoint(it.latitude, it.longitude)
-                            Log.d("MainActivity", "New location: $userLocation")
+                            Log.d("MainActivity", "New location: $userLocation, set center")
                             mapView?.controller?.setCenter(userLocation)
                         } ?: run {
                             Log.d("MainActivity", "Failed to retrieve location")
