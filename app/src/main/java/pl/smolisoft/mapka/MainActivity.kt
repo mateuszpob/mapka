@@ -3,6 +3,8 @@ package pl.smolisoft.mapka
 import MapViewContent
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Paint
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -22,6 +24,10 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
+import org.xmlpull.v1.XmlPullParserFactory
+import java.io.InputStream
+
 class MainActivity : ComponentActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -59,7 +65,10 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var mapView by remember { mutableStateOf<MapView?>(null) } // MapView do kontroli mapy
 
+            // Uruchomienie selektora pliku
+
             MapViewContent(
+                context = context,
                 mapView = mapView,
                 currentLocation = userLocation,
                 onMapViewInitialized = { initializedMapView ->
@@ -67,10 +76,10 @@ class MainActivity : ComponentActivity() {
                     checkLocationPermission(mapView)
                     initializeMarker(initializedMapView)
                 },
-                onGpxFileSelected = { uri, mapView ->
+                onGpxFileSelected = { uri, mapViewLocal ->
                     val inputStream = context.contentResolver.openInputStream(uri)
                     inputStream?.let { stream ->
-                        GpxUtils.drawGpxPath(stream, mapView)
+                        GpxUtils.drawGpxPath(stream, mapViewLocal)
                     }
                 },
                 onRequestLocationUpdate = {
