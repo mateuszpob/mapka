@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: GeoPoint? = null
+    private var userMarker: Marker? = null
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -33,6 +34,15 @@ class MainActivity : ComponentActivity() {
         if (!isGranted) {
             // Obsługa przypadku, gdy uprawnienia nie zostały przyznane
         }
+    }
+
+    private fun initializeMarker(mapView: MapView) {
+        userMarker = Marker(mapView).apply {
+            position = userLocation ?: GeoPoint(0.0, 0.0)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            title = "Jesteś tutaj"
+        }
+        mapView.overlays.add(userMarker!!)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView // Inicjalizacja mapView
                     checkLocationPermission(mapView)
+                    initializeMarker(initializedMapView)
                 },
                 onGpxFileSelected = { uri, mapView ->
                     val inputStream = context.contentResolver.openInputStream(uri)
@@ -68,7 +79,9 @@ class MainActivity : ComponentActivity() {
                         location?.let {
                             userLocation = GeoPoint(it.latitude, it.longitude)
                             Log.d("MainActivity", "New location: $userLocation, set center")
+                            userMarker?.position = userLocation
                             mapView?.controller?.setCenter(userLocation)
+                            mapView?.invalidate()
                         } ?: run {
                             Log.d("MainActivity", "Failed to retrieve location")
                         }
@@ -99,12 +112,12 @@ class MainActivity : ComponentActivity() {
                 location?.let {
                     userLocation = GeoPoint(it.latitude, it.longitude)
                     mapView?.let { map ->
-                        val marker = Marker(map).apply {
-                            position = userLocation!!
-                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            title = "Jesteś tutaj"
-                        }
-                        map.overlays.add(marker)
+//                        val marker = Marker(map).apply {
+//                            position = userLocation!!
+//                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+//                            title = "Jesteś tutaj"
+//                        }
+//                        map.overlays.add(marker)
                         map.controller.setCenter(userLocation)
                         map.invalidate()
                     }
