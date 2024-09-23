@@ -3,14 +3,12 @@ package pl.smolisoft.mapka
 import MapViewContent
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Paint
-import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,14 +17,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Polyline
-import org.xmlpull.v1.XmlPullParserFactory
-import java.io.InputStream
 
 class MainActivity : ComponentActivity() {
 
@@ -60,13 +58,31 @@ class MainActivity : ComponentActivity() {
         // Inicjalizacja klienta lokalizacji
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        val locationRequest = LocationRequest.Builder(
+                100
+            ).build()
+
         // Ustawiamy zawartość ekranu przy pomocy Jetpack Compose
         setContent {
             val context = LocalContext.current
             var mapView by remember { mutableStateOf<MapView?>(null) } // MapView do kontroli mapy
 
-            // Uruchomienie selektora pliku
+            // Callback do przetwarzania lokalizacji, z dostępem do mapView
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    for (location in locationResult.locations) {
+                        location?.let {
+                            userLocation = GeoPoint(it.latitude, it.longitude)
+                            Log.d("MainActivity", "New GPS location: $userLocation, set center")
+                            userMarker?.position = userLocation
+                            mapView?.controller?.setCenter(userLocation)
+                            mapView?.invalidate()
+                        }
+                    }
+                }
+            }
 
+            // Uruchomienie selektora pliku
             MapViewContent(
                 context = context,
                 mapView = mapView,
@@ -75,6 +91,17 @@ class MainActivity : ComponentActivity() {
                     mapView = initializedMapView // Inicjalizacja mapView
                     checkLocationPermission(mapView)
                     initializeMarker(initializedMapView)
+
+                    try {
+                        // Start GPS updates with mapView in scope
+                        fusedLocationClient.requestLocationUpdates(
+                            locationRequest,
+                            locationCallback,
+                            Looper.getMainLooper()
+                        )
+                    } catch (e: SecurityException) {
+                        Log.e("MainActivity", "Location permission not granted: ${e.message}")
+                    }
                 },
                 onGpxFileSelected = { uri, mapViewLocal ->
                     val inputStream = context.contentResolver.openInputStream(uri)
@@ -83,11 +110,11 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 onRequestLocationUpdate = {
-                    // Aktualizacja lokalizacji
+                    // Ręczne zapytanie o ostatnią lokalizację, na wypadek gdyby aktualizacje GPS nie działały
                     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                         location?.let {
                             userLocation = GeoPoint(it.latitude, it.longitude)
-                            Log.d("MainActivity", "New location: $userLocation, set center")
+                            Log.d("MainActivity", "Manual location update: $userLocation, set center")
                             userMarker?.position = userLocation
                             mapView?.controller?.setCenter(userLocation)
                             mapView?.invalidate()

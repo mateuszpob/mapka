@@ -94,7 +94,7 @@ fun MapViewContent(
         while (isTracking) {
             onRequestLocationUpdate() // Zaktualizuj lokalizację
 //            mapView?.controller?.setCenter(currentLocation) // Ustawienie na nową lokalizację
-            kotlinx.coroutines.delay(500) // Opóźnienie 2 sekundy
+            kotlinx.coroutines.delay(500)
         }
     }
 
