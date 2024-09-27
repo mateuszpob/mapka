@@ -24,9 +24,11 @@ fun MapViewContent(
     currentLocation: GeoPoint?,
     onMapViewInitialized: (MapView) -> Unit,
     onGpxFileSelected: (Uri, MapView) -> Unit,
-    onRequestLocationUpdate: () -> Unit // Funkcja do ponownej aktualizacji lokalizacji
+    onRequestLocationUpdate: () -> Unit,
+    startLocationService: (Boolean) -> Unit
 ) {
     var isTracking by remember { mutableStateOf(false) }
+    var isLocationUpdate by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -56,21 +58,14 @@ fun MapViewContent(
 
         // Przyciski kontrolne
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            // Przycisk do centrowania mapy na lokalizacji użytkownika
-            Button(onClick = {
-                onRequestLocationUpdate()
-            }) {
-                Text("Center")
-            }
 
-            Spacer(modifier = Modifier.width(16.dp))
 
             // Przycisk do wczytywania pliku GPX
             Button(onClick = {
                 // Otwórz okno wyboru plików
                 launcher.launch(arrayOf("*/*"))
             }) {
-                Text("Load GPX")
+                Text("GPX")
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -84,16 +79,30 @@ fun MapViewContent(
                     containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
                 )
             ) {
-                Text(if (isTracking) "Stop Tracking" else "Start Tracking")
+                Text(if (isTracking) "Tracking" else "Tracking")
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = {
+                    isLocationUpdate = !isLocationUpdate
+                    startLocationService(isLocationUpdate)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
+                )
+            ) {
+                Text(if (isLocationUpdate) "SL" else "SL")
             }
         }
     }
 
-    // Śledzenie pozycji w trybie "tracking" co 2 sekundy
+    // Śledzenie pozycji w trybie "tracking"
     LaunchedEffect(isTracking) {
         while (isTracking) {
             onRequestLocationUpdate() // Zaktualizuj lokalizację
-//            mapView?.controller?.setCenter(currentLocation) // Ustawienie na nową lokalizację
+            mapView?.controller?.setCenter(currentLocation) // Ustawienie na nową lokalizację
             kotlinx.coroutines.delay(500)
         }
     }

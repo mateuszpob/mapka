@@ -2,10 +2,15 @@ package pl.smolisoft.mapka
 
 import MapViewContent
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.os.Looper
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,11 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -28,7 +30,7 @@ import org.osmdroid.views.overlay.Marker
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+//    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: GeoPoint? = null
     private var userMarker: Marker? = null
 
@@ -42,25 +44,43 @@ class MainActivity : ComponentActivity() {
 
     private fun initializeMarker(mapView: MapView) {
         userMarker = Marker(mapView).apply {
-            position = userLocation ?: GeoPoint(0.0, 0.0)
+            position = GeoPoint(0.0, 0.0) // userLocation ?: GeoPoint(0.0, 0.0)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             title = "Jesteś tutaj"
         }
         mapView.overlays.add(userMarker!!)
     }
 
+//    private val permissionRequestReceiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context?, intent: Intent?) {
+//            ActivityCompat.requestPermissions(
+//                this@MainActivity,
+//                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+//                1
+//            )
+//        }
+//    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Ustawienie flagi, aby ekran nie gasł
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+//      // to moze byc potrzebne
+//        val intentFilter = IntentFilter("pl.smolisoft.mapka.REQUEST_LOCATION_PERMISSION")
+//        registerReceiver(permissionRequestReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
+
 
         // Konfiguracja osmdroid
         Configuration.getInstance().load(applicationContext, getPreferences(MODE_PRIVATE))
 
         // Inicjalizacja klienta lokalizacji
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        val locationRequest = LocationRequest.Builder(
-                100
-            ).build()
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//
+//        val locationRequest = LocationRequest.Builder(
+//            100
+//        ).build()
 
         // Ustawiamy zawartość ekranu przy pomocy Jetpack Compose
         setContent {
@@ -70,15 +90,15 @@ class MainActivity : ComponentActivity() {
             // Callback do przetwarzania lokalizacji, z dostępem do mapView
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    for (location in locationResult.locations) {
-                        location?.let {
-                            userLocation = GeoPoint(it.latitude, it.longitude)
-                            Log.d("MainActivity", "New GPS location: $userLocation, set center")
-                            userMarker?.position = userLocation
-                            mapView?.controller?.setCenter(userLocation)
-                            mapView?.invalidate()
-                        }
-                    }
+//                    for (location in locationResult.locations) {
+//                        location?.let {
+//                            userLocation = GeoPoint(it.latitude, it.longitude)
+//                            Log.d("MainActivity", "New GPS location: $userLocation, set center")
+//                            userMarker?.position = userLocation
+//                            mapView?.controller?.setCenter(userLocation)
+//                            mapView?.invalidate()
+//                        }
+//                    }
                 }
             }
 
@@ -86,7 +106,7 @@ class MainActivity : ComponentActivity() {
             MapViewContent(
                 context = context,
                 mapView = mapView,
-                currentLocation = userLocation,
+                currentLocation = GeoPoint(0.0, 0.0),
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView // Inicjalizacja mapView
                     checkLocationPermission(mapView)
@@ -94,11 +114,11 @@ class MainActivity : ComponentActivity() {
 
                     try {
                         // Start GPS updates with mapView in scope
-                        fusedLocationClient.requestLocationUpdates(
-                            locationRequest,
-                            locationCallback,
-                            Looper.getMainLooper()
-                        )
+//                        fusedLocationClient.requestLocationUpdates(
+//                            locationRequest,
+//                            locationCallback,
+//                            Looper.getMainLooper()
+//                        )
                     } catch (e: SecurityException) {
                         Log.e("MainActivity", "Location permission not granted: ${e.message}")
                     }
@@ -110,20 +130,40 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 onRequestLocationUpdate = {
-                    // Ręczne zapytanie o ostatnią lokalizację, na wypadek gdyby aktualizacje GPS nie działały
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                        location?.let {
-                            userLocation = GeoPoint(it.latitude, it.longitude)
-                            Log.d("MainActivity", "Manual location update: $userLocation, set center")
-                            userMarker?.position = userLocation
-                            mapView?.controller?.setCenter(userLocation)
-                            mapView?.invalidate()
-                        } ?: run {
-                            Log.d("MainActivity", "Failed to retrieve location")
-                        }
+                    Log.d("MainActivity", "Start tracking")
+                },
+                startLocationService = { isLocationUpdate ->
+                    if (isLocationUpdate) {
+                        startLocationService()
+                    } else {
+                        stopLocationService()
                     }
                 }
+
             )
+
+            // Odbieranie lokalizacji z serwisu
+            val locationReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    intent?.let {
+                        val latitude = it.getDoubleExtra("latitude", 0.0)
+                        val longitude = it.getDoubleExtra("longitude", 0.0)
+                        userLocation = GeoPoint(latitude, longitude)
+                        Log.d("MainActivity", "Received location: $latitude, $longitude")
+
+                        // Zaktualizuj pozycję markera
+                        userMarker?.position = userLocation
+                        mapView?.controller?.setCenter(userLocation)
+                        mapView?.invalidate()
+                    }
+                }
+            }
+
+            // Rejestracja BroadcastReceiver
+            val intentFilter = IntentFilter("LOCATION_UPDATE")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(locationReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
+            }
         }
     }
 
@@ -143,22 +183,8 @@ class MainActivity : ComponentActivity() {
                 1
             )
         } else {
-            // Pobierz aktualną lokalizację
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                location?.let {
-                    userLocation = GeoPoint(it.latitude, it.longitude)
-                    mapView?.let { map ->
-//                        val marker = Marker(map).apply {
-//                            position = userLocation!!
-//                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-//                            title = "Jesteś tutaj"
-//                        }
-//                        map.overlays.add(marker)
-                        map.controller.setCenter(userLocation)
-                        map.invalidate()
-                    }
-                }
-            }
+            // Start LocationService
+            // startLocationService()
         }
     }
 
@@ -169,5 +195,15 @@ class MainActivity : ComponentActivity() {
             // Poproś o uprawnienia do odczytu plików
             requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
+    }
+
+    private fun startLocationService() {
+        val intent = Intent(this, LocationService::class.java)
+        startForegroundService(intent)
+    }
+
+    private fun stopLocationService() {
+        val intent = Intent(this, LocationService::class.java)
+        stopService(intent)
     }
 }
