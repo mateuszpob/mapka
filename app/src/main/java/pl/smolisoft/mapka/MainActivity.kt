@@ -30,7 +30,6 @@ import org.osmdroid.views.overlay.Marker
 
 class MainActivity : ComponentActivity() {
 
-//    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: GeoPoint? = null
     private var userMarker: Marker? = null
 
@@ -42,24 +41,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun initializeMarker(mapView: MapView) {
+    private fun initializeMarker(mapView: MapView, context: Context) {
         userMarker = Marker(mapView).apply {
             position = GeoPoint(0.0, 0.0) // userLocation ?: GeoPoint(0.0, 0.0)
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             title = "Jesteś tutaj"
+
+            // Ustawienie własnej ikony
+            val iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_location)
+            icon = iconDrawable
         }
         mapView.overlays.add(userMarker!!)
     }
 
-//    private val permissionRequestReceiver = object : BroadcastReceiver() {
-//        override fun onReceive(context: Context?, intent: Intent?) {
-//            ActivityCompat.requestPermissions(
-//                this@MainActivity,
-//                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-//                1
-//            )
-//        }
-//    }
+    private val permissionRequestReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            ActivityCompat.requestPermissions(
+                this@MainActivity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,19 +71,12 @@ class MainActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
 //      // to moze byc potrzebne
-//        val intentFilter = IntentFilter("pl.smolisoft.mapka.REQUEST_LOCATION_PERMISSION")
-//        registerReceiver(permissionRequestReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
+        val intentFilter = IntentFilter("pl.smolisoft.mapka.REQUEST_LOCATION_PERMISSION")
+        registerReceiver(permissionRequestReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
 
 
         // Konfiguracja osmdroid
         Configuration.getInstance().load(applicationContext, getPreferences(MODE_PRIVATE))
-
-        // Inicjalizacja klienta lokalizacji
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-//
-//        val locationRequest = LocationRequest.Builder(
-//            100
-//        ).build()
 
         // Ustawiamy zawartość ekranu przy pomocy Jetpack Compose
         setContent {
@@ -110,7 +106,7 @@ class MainActivity : ComponentActivity() {
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView // Inicjalizacja mapView
                     checkLocationPermission(mapView)
-                    initializeMarker(initializedMapView)
+                    initializeMarker(initializedMapView, context)
 
                     try {
                         // Start GPS updates with mapView in scope
@@ -160,9 +156,9 @@ class MainActivity : ComponentActivity() {
             }
 
             // Rejestracja BroadcastReceiver
-            val intentFilter = IntentFilter("LOCATION_UPDATE")
+            val locationIntentFilter = IntentFilter("LOCATION_UPDATE")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(locationReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
+                registerReceiver(locationReceiver, locationIntentFilter, RECEIVER_NOT_EXPORTED)
             }
         }
     }
