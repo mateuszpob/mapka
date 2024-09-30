@@ -1,22 +1,37 @@
 import android.content.Context
-import android.graphics.Paint
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import org.osmdroid.views.MapView
-import org.osmdroid.util.GeoPoint
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import org.osmdroid.views.overlay.Polyline
-import org.xmlpull.v1.XmlPullParserFactory
+import androidx.core.content.ContextCompat
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 import pl.smolisoft.mapka.GpxUtils.drawGpxPath
-import java.io.InputStream
-
+import pl.smolisoft.mapka.R
 @Composable
 fun MapViewContent(
     context: Context,
@@ -29,6 +44,7 @@ fun MapViewContent(
 ) {
     var isTracking by remember { mutableStateOf(false) }
     var isLocationUpdate by remember { mutableStateOf(false) }
+    var userMarker by remember { mutableStateOf<Marker?>(null) } // Marker zapamiętany w stanie Compose
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -41,7 +57,7 @@ fun MapViewContent(
             }
         }
     )
-    // Layout główny ekranu
+
     Column(modifier = Modifier.fillMaxSize()) {
         // AndroidView dla MapView
         AndroidView(
@@ -50,99 +66,89 @@ fun MapViewContent(
                     map.setBuiltInZoomControls(true)
                     map.setMultiTouchControls(true)
                     map.controller.setZoom(15.0)
+
                     onMapViewInitialized(map)
+
+                    // Inicjalizacja markera
+                    userMarker = Marker(map).apply {
+                        position = currentLocation ?: GeoPoint(52.0, 21.0) // Default location
+                        setAnchor(0.2f, 0.2f)
+
+                        // Ustawienie niestandardowej ikony
+                        val iconDrawable = ContextCompat.getDrawable(ctx, R.drawable.ic_location)
+                        icon = iconDrawable
+                    }
+                    map.overlays.add(userMarker)
                 }
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
         )
 
         // Przyciski kontrolne
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.DarkGray) // Ustawienie ciemnego tła dla przycisków
+                .padding(8.dp) // Opcjonalnie: dodaj padding
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                // Przycisk do wczytywania pliku GPX
+                Button(onClick = {
+                    // Otwórz okno wyboru plików
+                    launcher.launch(arrayOf("*/*"))
+                }) {
+                    Text("GPX")
+                }
 
+                Spacer(modifier = Modifier.width(16.dp))
 
-            // Przycisk do wczytywania pliku GPX
-            Button(onClick = {
-                // Otwórz okno wyboru plików
-                launcher.launch(arrayOf("*/*"))
-            }) {
-                Text("GPX")
-            }
+                // Przycisk toggle dla trybu śledzenia pozycji
+                Button(
+                    onClick = {
+                        isTracking = !isTracking // Przełączenie trybu śledzenia
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
+                    )
+                ) {
+                    Text(if (isTracking) "Tracking" else "Tracking")
+                }
 
-            Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
-            // Przycisk toggle dla trybu śledzenia pozycji
-            Button(
-                onClick = {
-                    isTracking = !isTracking // Przełączenie trybu śledzenia
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
-                )
-            ) {
-                Text(if (isTracking) "Tracking" else "Tracking")
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Button(
-                onClick = {
-                    isLocationUpdate = !isLocationUpdate
-                    startLocationService(isLocationUpdate)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
-                )
-            ) {
-                Text(if (isLocationUpdate) "SL" else "SL")
+                Button(
+                    onClick = {
+                        isLocationUpdate = !isLocationUpdate
+                        startLocationService(isLocationUpdate)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
+                    )
+                ) {
+                    Text(if (isLocationUpdate) "SL" else "SL")
+                }
             }
         }
     }
 
-    // Śledzenie pozycji w trybie "tracking"
+    // LaunchedEffect śledzący aktualizację lokalizacji
     LaunchedEffect(isTracking) {
         while (isTracking) {
             onRequestLocationUpdate() // Zaktualizuj lokalizację
-            mapView?.controller?.setCenter(currentLocation) // Ustawienie na nową lokalizację
-            kotlinx.coroutines.delay(500)
-        }
-    }
 
-    // Funkcja do wczytywania pliku GPX i rysowania ścieżki na mapie
-    fun drawGpxPath(inputStream: InputStream, mapView: MapView?) {
-        try {
-            val factory = XmlPullParserFactory.newInstance()
-            val parser = factory.newPullParser()
-            parser.setInput(inputStream, null)
-            var eventType = parser.eventType
-            val geoPoints = mutableListOf<GeoPoint>()
-            while (eventType != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
-                if (eventType == org.xmlpull.v1.XmlPullParser.START_TAG) {
-                    if (parser.name == "trkpt") {
-                        val lat = parser.getAttributeValue(null, "lat").toDouble()
-                        val lon = parser.getAttributeValue(null, "lon").toDouble()
-                        val geoPoint = GeoPoint(lat, lon)
-                        geoPoints.add(geoPoint)
-                    }
+            mapView?.let { map ->
+                currentLocation?.let { location ->
+                    Log.d("MainActivity", "Received location --------1: ${location.latitude}, ${location.longitude}")
+                    Log.d("MainActivity", "Received location --------2: ${userMarker?.position?.latitude}, ${userMarker?.position?.longitude}")
+
+                    // Zaktualizuj marker i centrum mapy
+                    userMarker?.position = location
+                    map.controller.setCenter(location)
+                    map.invalidate()
                 }
-                eventType = parser.next()
             }
-            // Rysowanie ścieżki na mapie
-            if (geoPoints.isNotEmpty()) {
-                val polyline = Polyline().apply {
-                    setPoints(geoPoints)
-                    // Ustawienie stylu dla linii
-                    outlinePaint.apply {
-                        color = android.graphics.Color.RED // Ustawienie koloru na czerwony
-                        strokeWidth = 5f // Ustawienie grubości linii
-                        style =
-                            Paint.Style.STROKE // Ustawienie stylu linii (STROKE = linia, nie wypełnienie)
-                    }
-                }
-                mapView?.overlays?.add(polyline)
-                mapView?.invalidate() // Odświeżenie mapy, aby wyświetlić ścieżkę
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+
+            kotlinx.coroutines.delay(300)
         }
     }
 }

@@ -44,7 +44,7 @@ class LocationService : Service() {
     }
 
     override fun onCreate() {
-        Log.d("LocationService", "I ruszyłłł LocationService")
+        Log.d("LocationService", "Start LocationService")
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -53,7 +53,7 @@ class LocationService : Service() {
 //            .build()
 
         locationRequest = LocationRequest.Builder(
-            100
+            300
         ).build()
 
         startLocationUpdates()
