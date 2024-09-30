@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
 
     private var userLocation: GeoPoint? = null
     private var userMarker: Marker? = null
+    private var dotMarker: Marker? = null
+    private lateinit var permissionHandler: PermissionHandler
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -41,39 +43,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun initializeMarker(mapView: MapView, context: Context) {
-        userMarker = Marker(mapView).apply {
-            position = GeoPoint(0.0, 0.0) // userLocation ?: GeoPoint(0.0, 0.0)
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            title = "Jesteś tutaj"
-
-            // Ustawienie własnej ikony
-            val iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_location)
-            icon = iconDrawable
-        }
-        mapView.overlays.add(userMarker!!)
-    }
-
-    private val permissionRequestReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            ActivityCompat.requestPermissions(
-                this@MainActivity,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
-            )
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inicjalizacja PermissionHandler
+        permissionHandler = PermissionHandler(this)
+
         // Ustawienie flagi, aby ekran nie gasł
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-//      // to moze byc potrzebne
-        val intentFilter = IntentFilter("pl.smolisoft.mapka.REQUEST_LOCATION_PERMISSION")
-        registerReceiver(permissionRequestReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
-
 
         // Konfiguracja osmdroid
         Configuration.getInstance().load(applicationContext, getPreferences(MODE_PRIVATE))
@@ -83,40 +60,15 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             var mapView by remember { mutableStateOf<MapView?>(null) } // MapView do kontroli mapy
 
-            // Callback do przetwarzania lokalizacji, z dostępem do mapView
-            val locationCallback = object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult) {
-//                    for (location in locationResult.locations) {
-//                        location?.let {
-//                            userLocation = GeoPoint(it.latitude, it.longitude)
-//                            Log.d("MainActivity", "New GPS location: $userLocation, set center")
-//                            userMarker?.position = userLocation
-//                            mapView?.controller?.setCenter(userLocation)
-//                            mapView?.invalidate()
-//                        }
-//                    }
-                }
-            }
-
-            // Uruchomienie selektora pliku
             MapViewContent(
                 context = context,
                 mapView = mapView,
-                currentLocation = GeoPoint(0.0, 0.0),
+                currentLocation = GeoPoint(52.0, 21.0),
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView // Inicjalizacja mapView
-                    checkLocationPermission(mapView)
-                    initializeMarker(initializedMapView, context)
-
-                    try {
-                        // Start GPS updates with mapView in scope
-//                        fusedLocationClient.requestLocationUpdates(
-//                            locationRequest,
-//                            locationCallback,
-//                            Looper.getMainLooper()
-//                        )
-                    } catch (e: SecurityException) {
-                        Log.e("MainActivity", "Location permission not granted: ${e.message}")
+                    permissionHandler.checkLocationPermission(this, mapView) {
+                        // Uprawnienia są przyznane, więc inicjalizujemy mapę i marker
+                        initializeMarker(initializedMapView, context)
                     }
                 },
                 onGpxFileSelected = { uri, mapViewLocal ->
@@ -135,7 +87,6 @@ class MainActivity : ComponentActivity() {
                         stopLocationService()
                     }
                 }
-
             )
 
             // Odbieranie lokalizacji z serwisu
@@ -149,6 +100,7 @@ class MainActivity : ComponentActivity() {
 
                         // Zaktualizuj pozycję markera
                         userMarker?.position = userLocation
+                        dotMarker?.position = userLocation
                         mapView?.controller?.setCenter(userLocation)
                         mapView?.invalidate()
                     }
@@ -163,35 +115,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkLocationPermission(mapView: MapView?) {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
-            )
-        } else {
-            // Start LocationService
-            // startLocationService()
+    private fun initializeMarker(mapView: MapView, context: Context) {
+        userMarker = Marker(mapView).apply {
+            position = GeoPoint(52.0, 21.0) // userLocation ?: GeoPoint(0.0, 0.0)
+            setAnchor(0.2f, 0.2f)
+            // Ustawienie własnej ikony
+            val iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_location)
+            icon = iconDrawable
         }
+        mapView.overlays.add(userMarker!!)
+
+//        // Dodanie kropki na środku jako drugi marker
+//        dotMarker = Marker(mapView).apply {
+//            position = GeoPoint(52.0, 21.0) // Pozycja kropki to to samo co userLocation
+//            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+//
+//            // Ustawienie ikony jako kropka, np. mały okrągły obrazek (możesz przygotować mały plik PNG)
+//            val dotDrawable = ContextCompat.getDrawable(context, R.drawable.ic_dot) // np. mała kropka
+//            icon = dotDrawable
+//        }
+//        mapView.overlays.add(dotMarker)
     }
 
-    private fun checkStoragePermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Poproś o uprawnienia do odczytu plików
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-    }
+
 
     private fun startLocationService() {
         val intent = Intent(this, LocationService::class.java)
