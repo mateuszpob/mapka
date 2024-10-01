@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -67,6 +70,21 @@ fun MapViewContent(
                     map.setMultiTouchControls(true)
                     map.controller.setZoom(15.0)
 
+                    // Dodajemy listener mapy, aby wykryć ruch
+                    map.setMapListener(object : MapListener {
+                        override fun onScroll(event: ScrollEvent?): Boolean {
+                            // Gdy użytkownik poruszy mapę, wyłącz tracking
+                            isTracking = false
+                            Log.d("MapListener", "Map moved, tracking disabled")
+                            return true
+                        }
+
+                        override fun onZoom(event: ZoomEvent?): Boolean {
+                            isTracking = false
+                            return true
+                        }
+                    })
+
                     onMapViewInitialized(map)
 
                     // Inicjalizacja markera
@@ -88,7 +106,7 @@ fun MapViewContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.DarkGray) // Ustawienie ciemnego tła dla przycisków
+                .background(Color.White.copy(alpha = 0.7f)) // Ustawienie ciemnego tła dla przycisków
                 .padding(8.dp) // Opcjonalnie: dodaj padding
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
