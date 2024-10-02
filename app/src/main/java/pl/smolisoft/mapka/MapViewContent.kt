@@ -99,6 +99,18 @@ fun MapViewContent(
                     map.overlays.add(userMarker)
                 }
             },
+            update = { mapViewLocal ->
+                // Aktualizuj pozycję markera
+                userMarker?.position = currentLocation
+                if (isLocationUpdate) {
+                    if (!mapViewLocal.overlays.contains(userMarker)) {
+                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
+                    }
+                } else {
+                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
+                }
+                mapViewLocal.invalidate() // Odśwież mapę
+            },
             modifier = Modifier.weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
         )
 
@@ -124,6 +136,10 @@ fun MapViewContent(
                 Button(
                     onClick = {
                         isTracking = !isTracking // Przełączenie trybu śledzenia
+
+                        if (isTracking) {
+                            isLocationUpdate = true
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
@@ -138,6 +154,10 @@ fun MapViewContent(
                     onClick = {
                         isLocationUpdate = !isLocationUpdate
                         startLocationService(isLocationUpdate)
+
+                        if (!isLocationUpdate) {
+                            isTracking = false
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
