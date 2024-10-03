@@ -1,4 +1,4 @@
-package pl.smolisoft.mapka
+package pl.smolisoft.mapka.services
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -18,6 +18,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import pl.smolisoft.mapka.R
 
 class LocationService : Service() {
 

@@ -11,9 +11,6 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import pl.smolisoft.mapka.services.LocationService
+import pl.smolisoft.mapka.services.PermissionHandler
 
 class MainActivity : ComponentActivity() {
 

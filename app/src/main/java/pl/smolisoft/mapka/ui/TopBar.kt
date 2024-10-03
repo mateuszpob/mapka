@@ -1,4 +1,4 @@
-package pl.smolisoft.mapka
+package pl.smolisoft.mapka.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

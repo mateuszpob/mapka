@@ -1,4 +1,4 @@
-package pl.smolisoft.mapka
+package pl.smolisoft.mapka.services
 
 import android.Manifest
 import android.content.Context
