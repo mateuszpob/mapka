@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +37,23 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import pl.smolisoft.mapka.GpxUtils.drawGpxPath
 import pl.smolisoft.mapka.R
+import androidx.compose.material3.AlertDialog
+
+
+
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.zIndex
+import pl.smolisoft.mapka.MenuContent
+import pl.smolisoft.mapka.TopBar
+
+//@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapViewContent(
     context: Context,
@@ -43,11 +62,15 @@ fun MapViewContent(
     onMapViewInitialized: (MapView) -> Unit,
     onGpxFileSelected: (Uri, MapView) -> Unit,
     onRequestLocationUpdate: () -> Unit,
-    startLocationService: (Boolean) -> Unit
+    startLocationService: (Boolean) -> Unit,
+    onMenuClick: () -> Unit,
 ) {
     var isTracking by remember { mutableStateOf(false) }
     var isLocationUpdate by remember { mutableStateOf(false) }
     var userMarker by remember { mutableStateOf<Marker?>(null) } // Marker zapamiętany w stanie Compose
+    val topBarState = remember { mutableStateOf(true) }
+    var isMenuVisible by remember { mutableStateOf(false) }
+
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -61,7 +84,51 @@ fun MapViewContent(
         }
     )
 
+
     Column(modifier = Modifier.fillMaxSize()) {
+
+        // Pasek nawigacyjny (TopAppBar)
+//        TopAppBar(
+//            title = { Text("Mapka") },
+//            navigationIcon = {
+//                IconButton(onClick = onMenuClick) { // Otwieranie menu
+//                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
+//                }
+//            }
+//        )
+
+        TopBar(
+            onMenuClick = { isMenuVisible = true },
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .zIndex(1f) // Ustaw zIndex na wyższy niż dla mapy
+        )
+
+        // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
+        if (isMenuVisible) {
+            AlertDialog(
+                onDismissRequest = { isMenuVisible = false },
+                title = { Text("Menu") },
+                text = {
+                    MenuContent(
+                        onDismiss = { isMenuVisible = false },
+                        onSettingsSelected = {
+                            // Logika po wybraniu ustawień
+                        },
+                        onAnotherOptionSelected = {
+                            // Logika po wybraniu innej opcji
+                        }
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = { isMenuVisible = false }) {
+                        Text("Zamknij")
+                    }
+                }
+            )
+        }
+
+
         // AndroidView dla MapView
         AndroidView(
             factory = { ctx ->

@@ -1,44 +1,29 @@
 package pl.smolisoft.mapka
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-//import androidx.compose.material.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
-class DrawerMenu {
-    @SuppressLint("NotConstructor")
-    @Composable
-    fun DrawerMenu(onMenuItemClick: (String) -> Unit) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = "Home",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clickable { onMenuItemClick("Home") }
-            )
-            Text(
-                text = "Settings",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clickable { onMenuItemClick("Settings") }
-            )
-            Text(
-                text = "Profile",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .clickable { onMenuItemClick("Profile") }
-            )
-        }
-    }
-
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DrawerMenu(
+    drawerState: DrawerState,
+    onCloseDrawer: () -> Unit,
+    onSettingsSelected: () -> Unit,
+    onAnotherOptionSelected: () -> Unit
+) {
 }

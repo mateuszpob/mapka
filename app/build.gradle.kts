@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.osmdroid.android)
     implementation(libs.osmdroid.geopackage)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.navigation.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,4 +72,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.localbroadcastmanager)
+    implementation(libs.material3)
 }

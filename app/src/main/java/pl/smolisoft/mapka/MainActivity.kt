@@ -11,6 +11,9 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +68,10 @@ class MainActivity : ComponentActivity() {
                     } else {
                         stopLocationService()
                     }
+                },
+                onMenuClick = { // To jest funkcja, którą oczekuje MapViewContent
+                    Log.d("MainActivity", "Przycisk menu został kliknięty")
+
                 }
             )
 
