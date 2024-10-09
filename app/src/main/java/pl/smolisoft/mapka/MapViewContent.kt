@@ -44,17 +44,7 @@ fun MapViewContent(
 ) {
     var userMarker by remember { mutableStateOf<Marker?>(null) }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-        onResult = { uri: Uri? ->
-            uri?.let {
-                val inputStream = context.contentResolver.openInputStream(it)
-                inputStream?.let { stream ->
-                    drawGpxPath(stream, mapView)
-                }
-            }
-        }
-    )
+
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
@@ -64,6 +54,9 @@ fun MapViewContent(
                 title = { Text("Menu") },
                 text = {
                     MenuContent(
+                        context = context,
+                        mapView = mapView,
+                        viewModel = viewModel,
                         onDismiss = { viewModel.isMenuOpened = false },
                         onSettingsSelected = {
                             // Logika po wybraniu ustawień
