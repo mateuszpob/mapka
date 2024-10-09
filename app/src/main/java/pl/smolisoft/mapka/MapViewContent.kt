@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,7 +42,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.zIndex
 import pl.smolisoft.mapka.ui.MenuContent
-import pl.smolisoft.mapka.ui.TopBar
+import pl.smolisoft.mapka.ui.BottomBar
 
 //@OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +60,7 @@ fun MapViewContent(
     var isLocationUpdate by remember { mutableStateOf(false) }
     var userMarker by remember { mutableStateOf<Marker?>(null) } // Marker zapamiętany w stanie Compose
     val topBarState = remember { mutableStateOf(true) }
-    var isMenuVisible by remember { mutableStateOf(false) }
+    var isMenuOened by remember { mutableStateOf(false) }
 
 
     val launcher = rememberLauncherForActivityResult(
@@ -77,31 +78,14 @@ fun MapViewContent(
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // Pasek nawigacyjny (TopAppBar)
-//        TopAppBar(
-//            title = { Text("Mapka") },
-//            navigationIcon = {
-//                IconButton(onClick = onMenuClick) { // Otwieranie menu
-//                    Icon(Icons.Filled.Menu, contentDescription = "Menu")
-//                }
-//            }
-//        )
-
-        TopBar(
-            onMenuClick = { isMenuVisible = true },
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .zIndex(1f) // Ustaw zIndex na wyższy niż dla mapy
-        )
-
         // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
-        if (isMenuVisible) {
+        if (isMenuOened) {
             AlertDialog(
-                onDismissRequest = { isMenuVisible = false },
+                onDismissRequest = { isMenuOened = false },
                 title = { Text("Menu") },
                 text = {
                     MenuContent(
-                        onDismiss = { isMenuVisible = false },
+                        onDismiss = { isMenuOened = false },
                         onSettingsSelected = {
                             // Logika po wybraniu ustawień
                         },
@@ -111,12 +95,15 @@ fun MapViewContent(
                     )
                 },
                 confirmButton = {
-                    Button(onClick = { isMenuVisible = false }) {
+                    Button(onClick = { isMenuOened = false }) {
                         Text("Zamknij")
                     }
                 }
             )
         }
+
+
+
 
 
         // AndroidView dla MapView
@@ -168,62 +155,27 @@ fun MapViewContent(
                 }
                 mapViewLocal.invalidate() // Odśwież mapę
             },
-            modifier = Modifier.weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
+            modifier = Modifier
+                .weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
         )
 
-        // Przyciski kontrolne
-        Box(
+        BottomBar(
+            toggleTracking = { isTrackingRun ->
+                isTracking = isTrackingRun
+            },
+            toggleLocationService = { locationUpdate ->
+                startLocationService(locationUpdate)
+                isLocationUpdate = locationUpdate
+            },
+            onMenuClick = { isMenuOened = true },
+            toggleMenu = { isMenuOened1 ->
+                isMenuOened = isMenuOened1
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White.copy(alpha = 0.7f)) // Ustawienie ciemnego tła dla przycisków
-                .padding(8.dp) // Opcjonalnie: dodaj padding
-        ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                // Przycisk do wczytywania pliku GPX
-                Button(onClick = {
-                    // Otwórz okno wyboru plików
-                    launcher.launch(arrayOf("*/*"))
-                }) {
-                    Text("GPX")
-                }
+                .align(Alignment.CenterHorizontally)
+//                .background(Color.Red)
+        )
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Przycisk toggle dla trybu śledzenia pozycji
-                Button(
-                    onClick = {
-                        isTracking = !isTracking // Przełączenie trybu śledzenia
-
-                        if (isTracking) {
-                            isLocationUpdate = true
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
-                    )
-                ) {
-                    Text(if (isTracking) "Tracking" else "Tracking")
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Button(
-                    onClick = {
-                        isLocationUpdate = !isLocationUpdate
-                        startLocationService(isLocationUpdate)
-
-                        if (!isLocationUpdate) {
-                            isTracking = false
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
-                    )
-                ) {
-                    Text(if (isLocationUpdate) "SL" else "SL")
-                }
-            }
-        }
     }
 
     // LaunchedEffect śledzący aktualizację lokalizacji
@@ -233,8 +185,7 @@ fun MapViewContent(
 
             mapView?.let { map ->
                 currentLocation?.let { location ->
-                    Log.d("MainActivity", "Received location --------1: ${location.latitude}, ${location.longitude}")
-                    Log.d("MainActivity", "Received location --------2: ${userMarker?.position?.latitude}, ${userMarker?.position?.longitude}")
+                    Log.d("MainActivity", "Received location: ${location.latitude}, ${location.longitude}")
 
                     // Zaktualizuj marker i centrum mapy
                     userMarker?.position = location
