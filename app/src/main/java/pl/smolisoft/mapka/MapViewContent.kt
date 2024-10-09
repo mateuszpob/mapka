@@ -3,19 +3,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,9 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import org.osmdroid.events.MapListener
@@ -36,17 +26,13 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import pl.smolisoft.mapka.GpxUtils.drawGpxPath
 import pl.smolisoft.mapka.R
-import androidx.compose.material3.AlertDialog
-
-
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.zIndex
-import pl.smolisoft.mapka.ui.MenuContent
+import pl.smolisoft.mapka.services.SharedViewModel
 import pl.smolisoft.mapka.ui.BottomBar
+import pl.smolisoft.mapka.ui.MenuContent
 
-//@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapViewContent(
+    viewModel: SharedViewModel,
     context: Context,
     mapView: MapView?,
     currentLocation: GeoPoint?,
@@ -56,12 +42,7 @@ fun MapViewContent(
     startLocationService: (Boolean) -> Unit,
     onMenuClick: () -> Unit,
 ) {
-    var isTracking by remember { mutableStateOf(false) }
-    var isLocationUpdate by remember { mutableStateOf(false) }
-    var userMarker by remember { mutableStateOf<Marker?>(null) } // Marker zapamiętany w stanie Compose
-    val topBarState = remember { mutableStateOf(true) }
-    var isMenuOened by remember { mutableStateOf(false) }
-
+    var userMarker by remember { mutableStateOf<Marker?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -75,17 +56,15 @@ fun MapViewContent(
         }
     )
 
-
     Column(modifier = Modifier.fillMaxSize()) {
-
         // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
-        if (isMenuOened) {
+        if (viewModel.isMenuOpened) {
             AlertDialog(
-                onDismissRequest = { isMenuOened = false },
+                onDismissRequest = { viewModel.isMenuOpened = false },
                 title = { Text("Menu") },
                 text = {
                     MenuContent(
-                        onDismiss = { isMenuOened = false },
+                        onDismiss = { viewModel.isMenuOpened = false },
                         onSettingsSelected = {
                             // Logika po wybraniu ustawień
                         },
@@ -95,16 +74,12 @@ fun MapViewContent(
                     )
                 },
                 confirmButton = {
-                    Button(onClick = { isMenuOened = false }) {
+                    Button(onClick = { viewModel.isMenuOpened = false }) {
                         Text("Zamknij")
                     }
                 }
             )
         }
-
-
-
-
 
         // AndroidView dla MapView
         AndroidView(
@@ -118,13 +93,13 @@ fun MapViewContent(
                     map.setMapListener(object : MapListener {
                         override fun onScroll(event: ScrollEvent?): Boolean {
                             // Gdy użytkownik poruszy mapę, wyłącz tracking
-                            isTracking = false
+                            viewModel.isTracking = false
                             Log.d("MapListener", "Map moved, tracking disabled")
                             return true
                         }
 
                         override fun onZoom(event: ZoomEvent?): Boolean {
-                            isTracking = false
+                            viewModel.isTracking = false
                             return true
                         }
                     })
@@ -146,7 +121,7 @@ fun MapViewContent(
             update = { mapViewLocal ->
                 // Aktualizuj pozycję markera
                 userMarker?.position = currentLocation
-                if (isLocationUpdate) {
+                if (viewModel.isLocationUpdate) {
                     if (!mapViewLocal.overlays.contains(userMarker)) {
                         mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
                     }
@@ -160,27 +135,19 @@ fun MapViewContent(
         )
 
         BottomBar(
-            toggleTracking = { isTrackingRun ->
-                isTracking = isTrackingRun
-            },
+            viewModel= viewModel,
             toggleLocationService = { locationUpdate ->
                 startLocationService(locationUpdate)
-                isLocationUpdate = locationUpdate
-            },
-            onMenuClick = { isMenuOened = true },
-            toggleMenu = { isMenuOened1 ->
-                isMenuOened = isMenuOened1
+                viewModel.isLocationUpdate = locationUpdate
             },
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-//                .background(Color.Red)
         )
-
     }
 
     // LaunchedEffect śledzący aktualizację lokalizacji
-    LaunchedEffect(isTracking) {
-        while (isTracking) {
+    LaunchedEffect(viewModel.isTracking) {
+        while (viewModel.isTracking) {
             onRequestLocationUpdate() // Zaktualizuj lokalizację
 
             mapView?.let { map ->

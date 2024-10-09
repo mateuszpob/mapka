@@ -20,21 +20,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import pl.smolisoft.mapka.services.SharedViewModel
 
 @Composable
 fun BottomBar(
-    toggleTracking: (Boolean) -> Unit,
+    viewModel: SharedViewModel,
     toggleLocationService: (Boolean) -> Unit,
-    toggleMenu: (Boolean) -> Unit,
-    onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    var isTracking by remember { mutableStateOf(false) }
-    var isLocationUpdate by remember { mutableStateOf(false) }
-    var isMenuOened by remember { mutableStateOf(false) }
-    
-//    var isLocationUpdate by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth()
         .background(Color.LightGray)) {
         Row(
@@ -44,60 +37,43 @@ fun BottomBar(
         ) {
             Button(
                 onClick = {
-                    isTracking = !isTracking // Przełączenie trybu śledzenia
-                    toggleTracking(isTracking)
-                    if (isTracking) {
-                        isLocationUpdate = true
+                    viewModel.isTracking = !viewModel.isTracking // Przełączenie trybu śledzenia
+                    if (viewModel.isTracking) {
+                        viewModel.isLocationUpdate = true
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
+                    containerColor = if (viewModel.isTracking) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
                 )
             ) {
-                Text(if (isTracking) "Tracking" else "Tracking")
+                Text(if (viewModel.isTracking) "Tracking" else "Tracking")
             }
 
             Spacer(modifier = Modifier.width(16.dp)) // Dodaje przestrzeń między przyciskami
 
             Button(
                 onClick = {
-                    isLocationUpdate = !isLocationUpdate
-                    toggleLocationService(isLocationUpdate)
+                    viewModel.isLocationUpdate = !viewModel.isLocationUpdate
+                    toggleLocationService(viewModel.isLocationUpdate)
 
-                    if (!isLocationUpdate) {
-                        isTracking = false
+                    if (!viewModel.isLocationUpdate) {
+                        viewModel.isTracking = false
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
+                    containerColor = if (viewModel.isLocationUpdate) Color.Green else Color.Gray // Zmiana koloru na zielony, gdy włączone śledzenie
                 )
             ) {
-                Text(if (isLocationUpdate) "Location" else "Location")
+                Text(if (viewModel.isLocationUpdate) "Location" else "Location")
             }
 
             Spacer(modifier = Modifier.weight(1f)) // Dodaje elastyczną przestrzeń między przyciskami a trzecim przyciskiem
 
             Button(onClick = {
-                isMenuOened = !isMenuOened
-                toggleMenu(isMenuOened)
+                viewModel.isMenuOpened = !viewModel.isMenuOpened
             }) {
                 Text("M")
             }
         }
     }
-
-
-//    Row(
-//        modifier = modifier
-//            .fillMaxWidth()
-//            .background(Color.White)
-//            .padding(16.dp),
-//        horizontalArrangement = Arrangement.SpaceBetween
-//    ) {
-//        Text("Mapa", style = MaterialTheme.typography.titleMedium)
-//
-//        Button(onClick = onMenuClick) {
-//            Text("Menu")
-//        }
-//    }
 }

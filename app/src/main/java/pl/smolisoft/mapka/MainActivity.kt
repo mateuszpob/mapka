@@ -20,17 +20,23 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import pl.smolisoft.mapka.services.LocationService
+import pl.smolisoft.mapka.services.PathRecorder
 import pl.smolisoft.mapka.services.PermissionHandler
+import pl.smolisoft.mapka.services.SharedViewModel
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var permissionHandler: PermissionHandler
+    private lateinit var pathRecorder: PathRecorder
+    private lateinit var sharedViewModel: SharedViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Inicjalizacja PermissionHandler
         permissionHandler = PermissionHandler(this)
+        pathRecorder = PathRecorder(this)
+        sharedViewModel = SharedViewModel()
 
         // Ustawienie flagi, aby ekran nie gasł
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -44,6 +50,7 @@ class MainActivity : ComponentActivity() {
             var currentUserLocation by remember { mutableStateOf(GeoPoint(52.0, 21.0)) }
 
             MapViewContent(
+                viewModel = sharedViewModel,
                 context = context,
                 mapView = mapView,
                 currentLocation = currentUserLocation,
@@ -68,9 +75,8 @@ class MainActivity : ComponentActivity() {
                         stopLocationService()
                     }
                 },
-                onMenuClick = { // To jest funkcja, którą oczekuje MapViewContent
+                onMenuClick = {
                     Log.d("MainActivity", "Przycisk menu został kliknięty")
-
                 }
             )
 
