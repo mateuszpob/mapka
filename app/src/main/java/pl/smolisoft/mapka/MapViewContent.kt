@@ -35,7 +35,6 @@ fun MapViewContent(
     viewModel: SharedViewModel,
     context: Context,
     mapView: MapView?,
-    currentLocation: GeoPoint?,
     onMapViewInitialized: (MapView) -> Unit,
     onGpxFileSelected: (Uri, MapView) -> Unit,
     onRequestLocationUpdate: () -> Unit,
@@ -83,25 +82,25 @@ fun MapViewContent(
                     map.controller.setZoom(15.0)
 
                     // Dodajemy listener mapy, aby wykryć ruch
-                    map.setMapListener(object : MapListener {
-                        override fun onScroll(event: ScrollEvent?): Boolean {
-                            // Gdy użytkownik poruszy mapę, wyłącz tracking
-                            viewModel.isTracking = false
-                            Log.d("MapListener", "Map moved, tracking disabled")
-                            return true
-                        }
-
-                        override fun onZoom(event: ZoomEvent?): Boolean {
-                            viewModel.isTracking = false
-                            return true
-                        }
-                    })
+//                    map.setMapListener(object : MapListener {
+//                        override fun onScroll(event: ScrollEvent?): Boolean {
+//                            // Gdy użytkownik poruszy mapę, wyłącz tracking
+//                            viewModel.isTracking = false
+//                            Log.d("MapListener", "Map moved, tracking disabled")
+//                            return true
+//                        }
+//
+//                        override fun onZoom(event: ZoomEvent?): Boolean {
+//                            viewModel.isTracking = false
+//                            return true
+//                        }
+//                    })
 
                     onMapViewInitialized(map)
 
                     // Inicjalizacja markera
                     userMarker = Marker(map).apply {
-                        position = currentLocation ?: GeoPoint(52.0, 21.0) // Default location
+                        position = viewModel.currentLocation
                         setAnchor(0.2f, 0.2f)
 
                         // Ustawienie niestandardowej ikony
@@ -113,14 +112,19 @@ fun MapViewContent(
             },
             update = { mapViewLocal ->
                 // Aktualizuj pozycję markera
-                userMarker?.position = currentLocation
-                if (viewModel.isLocationUpdate) {
-                    if (!mapViewLocal.overlays.contains(userMarker)) {
-                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
-                    }
-                } else {
-                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
-                }
+                userMarker?.position = viewModel.currentLocation
+
+                Log.d("MARKER", "Location: ${viewModel.currentLocation.latitude}, ${viewModel.currentLocation.longitude}")
+
+
+
+//                if (viewModel.isLocationUpdate) {
+//                    if (!mapViewLocal.overlays.contains(userMarker)) {
+//                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
+//                    }
+//                } else {
+//                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
+//                }
                 mapViewLocal.invalidate() // Odśwież mapę
             },
             modifier = Modifier
@@ -144,7 +148,7 @@ fun MapViewContent(
             onRequestLocationUpdate() // Zaktualizuj lokalizację
 
             mapView?.let { map ->
-                currentLocation?.let { location ->
+                viewModel.currentLocation?.let { location ->
                     Log.d("MainActivity", "Received location: ${location.latitude}, ${location.longitude}")
 
                     // Zaktualizuj marker i centrum mapy

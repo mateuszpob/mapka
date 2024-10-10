@@ -23,6 +23,7 @@ import pl.smolisoft.mapka.services.LocationService
 import pl.smolisoft.mapka.services.PathRecorder
 import pl.smolisoft.mapka.services.PermissionHandler
 import pl.smolisoft.mapka.services.SharedViewModel
+import pl.smolisoft.mapka.services.SimulatedLocationService
 
 class MainActivity : ComponentActivity() {
 
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var sharedViewModel: SharedViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d("MainActivity", "creating MainActivity")
         super.onCreate(savedInstanceState)
 
         // Inicjalizacja PermissionHandler
@@ -47,13 +49,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             var mapView by remember { mutableStateOf<MapView?>(null) }
-            var currentUserLocation by remember { mutableStateOf(GeoPoint(52.0, 21.0)) }
 
             MapViewContent(
                 viewModel = sharedViewModel,
                 context = context,
                 mapView = mapView,
-                currentLocation = currentUserLocation,
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView
                     permissionHandler.checkLocationPermission(this, mapView) {
@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
                     intent?.let {
                         val latitude = it.getDoubleExtra("latitude", 0.0)
                         val longitude = it.getDoubleExtra("longitude", 0.0)
-                        currentUserLocation = GeoPoint(latitude, longitude)
+                        sharedViewModel.currentLocation = GeoPoint(latitude, longitude)
 
                         Log.d("MainActivity", "Received location: $latitude, $longitude")
                     }
@@ -102,12 +102,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startLocationService() {
-        val intent = Intent(this, LocationService::class.java)
+        val intent = Intent(this, SimulatedLocationService::class.java)
         startForegroundService(intent)
     }
 
     private fun stopLocationService() {
-        val intent = Intent(this, LocationService::class.java)
+        val intent = Intent(this, SimulatedLocationService::class.java)
         stopService(intent)
     }
 }
