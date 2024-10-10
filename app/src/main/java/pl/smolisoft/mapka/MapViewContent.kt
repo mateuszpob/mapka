@@ -1,6 +1,8 @@
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,7 @@ import pl.smolisoft.mapka.services.SharedViewModel
 import pl.smolisoft.mapka.ui.BottomBar
 import pl.smolisoft.mapka.ui.MenuContent
 
+@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun MapViewContent(
     viewModel: SharedViewModel,
@@ -81,20 +84,22 @@ fun MapViewContent(
                     map.setMultiTouchControls(true)
                     map.controller.setZoom(15.0)
 
-                    // Dodajemy listener mapy, aby wykryć ruch
-//                    map.setMapListener(object : MapListener {
-//                        override fun onScroll(event: ScrollEvent?): Boolean {
-//                            // Gdy użytkownik poruszy mapę, wyłącz tracking
-//                            viewModel.isTracking = false
-//                            Log.d("MapListener", "Map moved, tracking disabled")
-//                            return true
-//                        }
-//
-//                        override fun onZoom(event: ZoomEvent?): Boolean {
-//                            viewModel.isTracking = false
-//                            return true
-//                        }
-//                    })
+                    // Ustawienie nasłuchiwania na dotyk mapy
+                    map.setOnTouchListener { _, motionEvent ->
+                        when (motionEvent.action) {
+                            MotionEvent.ACTION_MOVE -> {
+                                // Gdy użytkownik przesuwa mapę
+                                viewModel.isTracking = false
+                                Log.d("MapListener", "Map moved, tracking disabled")
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                // Gdy użytkownik przestaje przesuwać
+                                viewModel.isTracking = false
+                                Log.d("MapListener", "Touch released, tracking disabled")
+                            }
+                        }
+                        false
+                    }
 
                     onMapViewInitialized(map)
 
