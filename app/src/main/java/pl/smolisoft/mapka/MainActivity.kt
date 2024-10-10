@@ -102,12 +102,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startLocationService() {
-        val intent = Intent(this, SimulatedLocationService::class.java)
+        val intent = Intent(this, LocationService::class.java)
         startForegroundService(intent)
     }
 
     private fun stopLocationService() {
-        val intent = Intent(this, SimulatedLocationService::class.java)
+        val intent = Intent(this, LocationService::class.java)
         stopService(intent)
     }
 }

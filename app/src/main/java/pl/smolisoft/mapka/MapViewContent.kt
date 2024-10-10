@@ -118,13 +118,13 @@ fun MapViewContent(
 
 
 
-//                if (viewModel.isLocationUpdate) {
-//                    if (!mapViewLocal.overlays.contains(userMarker)) {
-//                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
-//                    }
-//                } else {
-//                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
-//                }
+                if (viewModel.isLocationUpdate) {
+                    if (!mapViewLocal.overlays.contains(userMarker)) {
+                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
+                    }
+                } else {
+                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
+                }
                 mapViewLocal.invalidate() // Odśwież mapę
             },
             modifier = Modifier

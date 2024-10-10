@@ -30,12 +30,6 @@ class LocationService : Service() {
             for (location in locationResult.locations) {
                 Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}")
 
-                // Wysyłanie lokalizacji do MainActivity
-//                val intent = Intent("LOCATION_UPDATE")
-//                intent.putExtra("latitude", location.latitude)
-//                intent.putExtra("longitude", location.longitude)
-//                LocalBroadcastManager.getInstance(this@LocationService).sendBroadcast(intent)
-
                 val intent = Intent("LOCATION_UPDATE")
                 intent.putExtra("latitude", location.latitude)
                 intent.putExtra("longitude", location.longitude)
