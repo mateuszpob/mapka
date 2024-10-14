@@ -2,16 +2,26 @@ package pl.smolisoft.mapka.services
 
 import android.content.Context
 import android.graphics.Color
+import android.util.Log
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.util.GeoPoint
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
+class PathRecorder(private val context: Context, private val viewModel: SharedViewModel) {
 
-class PathRecorder(private val context: Context) {
     private val pathPoints = mutableListOf<GeoPoint>()
     private var pathOverlay: Polygon? = null
+
+    init {
+        // Obserwacja na event startRecording
+        viewModel.startRecordingEvent.observeForever { mapView ->
+            mapView?.let {
+                startRecording(it)
+            }
+        }
+    }
 
     fun startRecording(mapView: MapView) {
         // Inicjalizacja rysowania ścieżki na mapie
@@ -64,7 +74,7 @@ class PathRecorder(private val context: Context) {
     fun clearPath() {
         // Czyści zarejestrowane punkty i overlay
         pathPoints.clear()
-        pathOverlay?.points?.clear()
+        pathOverlay?.setPoints(emptyList())
 //        pathOverlay?.invalidate()
     }
 }

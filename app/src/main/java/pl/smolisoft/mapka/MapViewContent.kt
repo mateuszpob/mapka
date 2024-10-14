@@ -50,7 +50,7 @@ fun MapViewContent(
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
-        if (viewModel.isMenuOpened) {
+        if (mapView !== null && viewModel.isMenuOpened) {
             AlertDialog(
                 onDismissRequest = { viewModel.isMenuOpened = false },
                 title = { Text("Menu") },
@@ -118,10 +118,6 @@ fun MapViewContent(
             update = { mapViewLocal ->
                 // Aktualizuj pozycję markera
                 userMarker?.position = viewModel.currentLocation
-
-                Log.d("MARKER", "Location: ${viewModel.currentLocation.latitude}, ${viewModel.currentLocation.longitude}")
-
-
 
                 if (viewModel.isLocationUpdate) {
                     if (!mapViewLocal.overlays.contains(userMarker)) {

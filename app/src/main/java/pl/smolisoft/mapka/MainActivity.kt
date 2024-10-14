@@ -37,8 +37,8 @@ class MainActivity : ComponentActivity() {
 
         // Inicjalizacja PermissionHandler
         permissionHandler = PermissionHandler(this)
-        pathRecorder = PathRecorder(this)
         sharedViewModel = SharedViewModel()
+        pathRecorder = PathRecorder(this, sharedViewModel)
 
         // Ustawienie flagi, aby ekran nie gasł
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -67,6 +67,7 @@ class MainActivity : ComponentActivity() {
                 },
                 onRequestLocationUpdate = {
                     Log.d("MainActivity", "Tracking chodzi")
+
                 },
                 startLocationService = { isLocationUpdate ->
                     if (isLocationUpdate) {
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
                         val latitude = it.getDoubleExtra("latitude", 0.0)
                         val longitude = it.getDoubleExtra("longitude", 0.0)
                         sharedViewModel.currentLocation = GeoPoint(latitude, longitude)
-
+                        pathRecorder.addLocation(sharedViewModel.currentLocation)
                         Log.d("MainActivity", "Received location: $latitude, $longitude")
                     }
                 }
@@ -102,12 +103,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startLocationService() {
-        val intent = Intent(this, LocationService::class.java)
+        val intent = Intent(this, SimulatedLocationService::class.java)
         startForegroundService(intent)
     }
 
     private fun stopLocationService() {
-        val intent = Intent(this, LocationService::class.java)
+        val intent = Intent(this, SimulatedLocationService::class.java)
         stopService(intent)
     }
 }

@@ -20,7 +20,7 @@ import pl.smolisoft.mapka.services.SharedViewModel
 @Composable
 fun MenuContent(
     context: Context,
-    mapView: MapView?,
+    mapView: MapView,
     viewModel: SharedViewModel,
     onDismiss: () -> Unit,
     onSettingsSelected: () -> Unit,
@@ -52,12 +52,13 @@ fun MenuContent(
 
         Button(
             onClick = {
-                onAnotherOptionSelected()
-                onDismiss()
+                viewModel.startRecording(mapView)
+//                onAnotherOptionSelected()
+//                onDismiss()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Inna opcja")
+            Text("Nagrywaj")
         }
     }
 }
