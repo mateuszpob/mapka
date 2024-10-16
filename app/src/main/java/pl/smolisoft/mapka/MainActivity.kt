@@ -1,6 +1,5 @@
 package pl.smolisoft.mapka
 
-import MapViewContent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -23,7 +22,6 @@ import pl.smolisoft.mapka.services.LocationService
 import pl.smolisoft.mapka.services.PathRecorder
 import pl.smolisoft.mapka.services.PermissionHandler
 import pl.smolisoft.mapka.services.SharedViewModel
-import pl.smolisoft.mapka.services.SimulatedLocationService
 
 class MainActivity : ComponentActivity() {
 
@@ -59,12 +57,6 @@ class MainActivity : ComponentActivity() {
                     permissionHandler.checkLocationPermission(this, mapView) {
                     }
                 },
-                onGpxFileSelected = { uri, mapViewLocal ->
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    inputStream?.let { stream ->
-                        GpxUtils.drawGpxPath(stream, mapViewLocal)
-                    }
-                },
                 onRequestLocationUpdate = {
                     Log.d("MainActivity", "Tracking chodzi")
                 },
@@ -74,9 +66,6 @@ class MainActivity : ComponentActivity() {
                     } else {
                         stopLocationService()
                     }
-                },
-                onMenuClick = {
-                    Log.d("MainActivity", "Przycisk menu został kliknięty")
                 }
             )
 

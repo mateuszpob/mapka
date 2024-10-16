@@ -26,7 +26,6 @@ class LocationService : Service() {
     private lateinit var locationRequest: LocationRequest
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            locationResult ?: return
             for (location in locationResult.locations) {
                 Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}")
 
@@ -42,11 +41,6 @@ class LocationService : Service() {
         Log.d("LocationService", "Start LocationService")
         super.onCreate()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-//        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 500L)
-//            .setMinUpdateIntervalMillis(500L)
-//            .build()
-
         locationRequest = LocationRequest.Builder(
             300
         ).build()

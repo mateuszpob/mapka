@@ -1,10 +1,9 @@
+package pl.smolisoft.mapka
+
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.view.MotionEvent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
@@ -20,14 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import pl.smolisoft.mapka.GpxUtils.drawGpxPath
-import pl.smolisoft.mapka.R
 import pl.smolisoft.mapka.services.SharedViewModel
 import pl.smolisoft.mapka.ui.BottomBar
 import pl.smolisoft.mapka.ui.MenuContent
@@ -39,10 +32,8 @@ fun MapViewContent(
     context: Context,
     mapView: MapView?,
     onMapViewInitialized: (MapView) -> Unit,
-    onGpxFileSelected: (Uri, MapView) -> Unit,
     onRequestLocationUpdate: () -> Unit,
     startLocationService: (Boolean) -> Unit,
-    onMenuClick: () -> Unit,
 ) {
     var userMarker by remember { mutableStateOf<Marker?>(null) }
 
@@ -80,7 +71,6 @@ fun MapViewContent(
         AndroidView(
             factory = { ctx ->
                 MapView(ctx).also { map ->
-                    map.setBuiltInZoomControls(true)
                     map.setMultiTouchControls(true)
                     map.controller.setZoom(15.0)
 
@@ -153,7 +143,7 @@ fun MapViewContent(
             onRequestLocationUpdate() // Zaktualizuj lokalizację
 
             mapView?.let { map ->
-                viewModel.currentLocation?.let { location ->
+                viewModel.currentLocation.let { location ->
                     Log.d("MainActivity", "Received location: ${location.latitude}, ${location.longitude}")
 
                     // Zaktualizuj marker i centrum mapy
