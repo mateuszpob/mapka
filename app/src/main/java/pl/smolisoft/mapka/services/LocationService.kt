@@ -20,19 +20,16 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import pl.smolisoft.mapka.R
 
-class LocationService : Service() {
+class LocationService: Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             for (location in locationResult.locations) {
                 Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}")
-
-                val intent = Intent("LOCATION_UPDATE")
-                intent.putExtra("latitude", location.latitude)
-                intent.putExtra("longitude", location.longitude)
-                sendBroadcast(intent)
+                LocationRepository.updateLocation(location)
             }
         }
     }
@@ -57,14 +54,6 @@ class LocationService : Service() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-
             // Wysyłamy broadcast do MainActivity, żeby poprosiła o uprawnienia
             val intent = Intent("pl.smolisoft.mapka.REQUEST_LOCATION_PERMISSION")
             sendBroadcast(intent)

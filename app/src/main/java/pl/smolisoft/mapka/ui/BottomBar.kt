@@ -35,6 +35,7 @@ fun BottomBar(
                     viewModel.isTracking = !viewModel.isTracking // Przełączenie trybu śledzenia
                     if (viewModel.isTracking) {
                         viewModel.isLocationUpdate = true
+                        toggleLocationService(viewModel.isLocationUpdate)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(

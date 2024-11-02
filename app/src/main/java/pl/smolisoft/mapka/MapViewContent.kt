@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import pl.smolisoft.mapka.services.SharedViewModel
@@ -32,12 +34,29 @@ fun MapViewContent(
     context: Context,
     mapView: MapView?,
     onMapViewInitialized: (MapView) -> Unit,
-    onRequestLocationUpdate: () -> Unit,
     startLocationService: (Boolean) -> Unit,
 ) {
     var userMarker by remember { mutableStateOf<Marker?>(null) }
+    val currentLocation by viewModel.currentLocation.collectAsState()
 
+    Log.d("MapViewContent", "MapViewContent is active")
 
+    currentLocation?.let { location ->
+        Log.d("MapListenerSuck", "CONTENTTTTTTTTTTTTT Lat: ${location.latitude}, Lon: ${location.longitude}")
+        mapView?.let { map ->
+            // Ustaw marker na aktualną lokalizację
+            if (userMarker == null) {
+                userMarker = Marker(map).apply {
+                    setAnchor(0.5f, 0.5f)
+                    val iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_location)
+                    icon = iconDrawable
+                    map.overlays.add(this)
+                }
+            }
+            userMarker?.position = GeoPoint(location.latitude, location.longitude)
+            map.controller.setCenter(GeoPoint(location.latitude, location.longitude))
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
@@ -95,7 +114,6 @@ fun MapViewContent(
 
                     // Inicjalizacja markera
                     userMarker = Marker(map).apply {
-                        position = viewModel.currentLocation
                         setAnchor(0.2f, 0.2f)
 
                         // Ustawienie niestandardowej ikony
@@ -103,25 +121,32 @@ fun MapViewContent(
                         icon = iconDrawable
                     }
                     map.overlays.add(userMarker)
+
+//                    location?.let { location ->
+//                        Log.d("MapListenerSuck","Lat: ${location.latitude}, Lon: ${location.longitude}")
+//                        // Tutaj możesz zaktualizować widok mapy o nową lokalizację
+//
+//                        if (viewModel.isLocationUpdate) {
+//                            if (!mapView?.overlays?.contains(userMarker)!!) {
+//                                mapView.overlays?.add(userMarker) // Dodaj, jeśli nie ma
+//                            }
+//                        } else {
+//                            mapView?.overlays?.remove(userMarker) // Usuń, jeśli jest niewidoczny
+//                        }
+//                        mapView?.invalidate() // Odśwież mapę
+//
+//                        //-------------------------------------
+//
+//                        userMarker?.position = GeoPoint(location.latitude, location.longitude)
+//                        map.controller.setCenter(GeoPoint(location.latitude, location.longitude))
+//                        map.invalidate()
+//
+//
+//                    }
+
                 }
             },
-            update = { mapViewLocal ->
-                // Aktualizuj pozycję markera
-                userMarker?.position = viewModel.currentLocation
 
-                Log.d("MARKER", "Location: ${viewModel.currentLocation.latitude}, ${viewModel.currentLocation.longitude}")
-
-
-
-                if (viewModel.isLocationUpdate) {
-                    if (!mapViewLocal.overlays.contains(userMarker)) {
-                        mapViewLocal.overlays.add(userMarker) // Dodaj, jeśli nie ma
-                    }
-                } else {
-                    mapViewLocal.overlays.remove(userMarker) // Usuń, jeśli jest niewidoczny
-                }
-                mapViewLocal.invalidate() // Odśwież mapę
-            },
             modifier = Modifier
                 .weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
         )
@@ -139,21 +164,6 @@ fun MapViewContent(
 
     // LaunchedEffect śledzący aktualizację lokalizacji
     LaunchedEffect(viewModel.isTracking) {
-        while (viewModel.isTracking) {
-            onRequestLocationUpdate() // Zaktualizuj lokalizację
 
-            mapView?.let { map ->
-                viewModel.currentLocation.let { location ->
-                    Log.d("MainActivity", "Received location: ${location.latitude}, ${location.longitude}")
-
-                    // Zaktualizuj marker i centrum mapy
-                    userMarker?.position = location
-                    map.controller.setCenter(location)
-                    map.invalidate()
-                }
-            }
-
-            kotlinx.coroutines.delay(300)
-        }
     }
 }
