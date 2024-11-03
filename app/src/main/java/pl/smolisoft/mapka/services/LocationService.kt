@@ -32,7 +32,7 @@ class LocationService : Service() {
     private lateinit var locationManager: LocationManager
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            Log.d("LocationService", "Location: ${location.latitude}, ${location.longitude}")
+            Log.d("LocationService", "LocationService - Location: ${location.latitude}, ${location.longitude}")
             LocationRepository.updateLocation(location) // Aktualizacja lokalizacji w repozytorium
         }
 

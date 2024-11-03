@@ -42,7 +42,6 @@ fun MapViewContent(
     Log.d("MapViewContent", "MapViewContent is active")
 
     currentLocation?.let { location ->
-        Log.d("MapListenerSuck", "CONTENTTTTTTTTTTTTT Lat: ${location.latitude}, Lon: ${location.longitude}")
         mapView?.let { map ->
             // Ustaw marker na aktualną lokalizację
             if (userMarker == null) {
@@ -121,29 +120,6 @@ fun MapViewContent(
                         icon = iconDrawable
                     }
                     map.overlays.add(userMarker)
-
-//                    location?.let { location ->
-//                        Log.d("MapListenerSuck","Lat: ${location.latitude}, Lon: ${location.longitude}")
-//                        // Tutaj możesz zaktualizować widok mapy o nową lokalizację
-//
-//                        if (viewModel.isLocationUpdate) {
-//                            if (!mapView?.overlays?.contains(userMarker)!!) {
-//                                mapView.overlays?.add(userMarker) // Dodaj, jeśli nie ma
-//                            }
-//                        } else {
-//                            mapView?.overlays?.remove(userMarker) // Usuń, jeśli jest niewidoczny
-//                        }
-//                        mapView?.invalidate() // Odśwież mapę
-//
-//                        //-------------------------------------
-//
-//                        userMarker?.position = GeoPoint(location.latitude, location.longitude)
-//                        map.controller.setCenter(GeoPoint(location.latitude, location.longitude))
-//                        map.invalidate()
-//
-//
-//                    }
-
                 }
             },
 
