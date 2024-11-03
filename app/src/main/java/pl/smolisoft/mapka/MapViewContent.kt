@@ -39,26 +39,7 @@ fun MapViewContent(
     var userMarker by remember { mutableStateOf<Marker?>(null) }
     val currentLocation by viewModel.currentLocation.collectAsState()
 
-    Log.d("MapViewContent", "MapViewContent is active")
-
-    currentLocation?.let { location ->
-        mapView?.let { map ->
-            // Ustaw marker na aktualną lokalizację
-            if (userMarker == null) {
-                userMarker = Marker(map).apply {
-                    setAnchor(0.5f, 0.5f)
-                    val iconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_location)
-                    icon = iconDrawable
-                    map.overlays.add(this)
-                }
-            }
-            userMarker?.position = GeoPoint(location.latitude, location.longitude)
-            map.controller.setCenter(GeoPoint(location.latitude, location.longitude))
-        }
-    }
-
     Column(modifier = Modifier.fillMaxSize()) {
-        // Tutaj możesz dodać kod do wyświetlenia menu, np. AlertDialog
         if (viewModel.isMenuOpened) {
             AlertDialog(
                 onDismissRequest = { viewModel.isMenuOpened = false },
@@ -85,61 +66,43 @@ fun MapViewContent(
             )
         }
 
-        // AndroidView dla MapView
+        // Ustawienie MapView tylko raz
         AndroidView(
             factory = { ctx ->
                 MapView(ctx).also { map ->
                     map.setMultiTouchControls(true)
                     map.controller.setZoom(15.0)
 
-                    // Ustawienie nasłuchiwania na dotyk mapy
-                    map.setOnTouchListener { _, motionEvent ->
-                        when (motionEvent.action) {
-                            MotionEvent.ACTION_MOVE -> {
-                                // Gdy użytkownik przesuwa mapę
-                                viewModel.isTracking = false
-                                Log.d("MapListener", "Map moved, tracking disabled")
-                            }
-                            MotionEvent.ACTION_UP -> {
-                                // Gdy użytkownik przestaje przesuwać
-                                viewModel.isTracking = false
-                                Log.d("MapListener", "Touch released, tracking disabled")
-                            }
-                        }
-                        false
-                    }
-
                     onMapViewInitialized(map)
 
                     // Inicjalizacja markera
                     userMarker = Marker(map).apply {
-                        setAnchor(0.2f, 0.2f)
-
-                        // Ustawienie niestandardowej ikony
-                        val iconDrawable = ContextCompat.getDrawable(ctx, R.drawable.ic_location)
-                        icon = iconDrawable
+                        setAnchor(0.5f, 0.5f)
+                        icon = ContextCompat.getDrawable(ctx, R.drawable.ic_location)
+                        map.overlays.add(this)
                     }
-                    map.overlays.add(userMarker)
                 }
             },
-
-            modifier = Modifier
-                .weight(1f) // Umożliwienie mapie zajęcia dostępnej przestrzeni
+            modifier = Modifier.weight(1f)
         )
 
         BottomBar(
-            viewModel= viewModel,
+            viewModel = viewModel,
             toggleLocationService = { locationUpdate ->
                 startLocationService(locationUpdate)
                 viewModel.isLocationUpdate = locationUpdate
             },
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
     }
 
-    // LaunchedEffect śledzący aktualizację lokalizacji
-    LaunchedEffect(viewModel.isTracking) {
-
+    // LaunchedEffect monitorujący aktualizacje lokalizacji i ustawiający pozycję na mapie
+    LaunchedEffect(currentLocation) {
+        currentLocation?.let { location ->
+            userMarker?.apply {
+                position = GeoPoint(location.latitude, location.longitude)
+            }
+            mapView?.controller?.animateTo(GeoPoint(location.latitude, location.longitude))
+        }
     }
 }
