@@ -27,7 +27,6 @@ import pl.smolisoft.mapka.services.SharedViewModel
 import pl.smolisoft.mapka.ui.BottomBar
 import pl.smolisoft.mapka.ui.MenuContent
 
-@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun MapViewContent(
     viewModel: SharedViewModel,
@@ -38,6 +37,8 @@ fun MapViewContent(
 ) {
     var userMarker by remember { mutableStateOf<Marker?>(null) }
     val currentLocation by viewModel.currentLocation.collectAsState()
+
+    Log.d("MapViewContent", "MapViewContent is active")
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (viewModel.isMenuOpened) {
@@ -77,7 +78,7 @@ fun MapViewContent(
 
                     // Inicjalizacja markera
                     userMarker = Marker(map).apply {
-                        setAnchor(0.5f, 0.5f)
+                        setAnchor(0.2f, 0.2f)
                         icon = ContextCompat.getDrawable(ctx, R.drawable.ic_location)
                         map.overlays.add(this)
                     }
