@@ -13,6 +13,7 @@ class SharedViewModel(private val locationRepository: LocationRepository) : View
     var isTracking by mutableStateOf(false)
     var isMenuOpened by mutableStateOf(false)
     var isLocationUpdate by mutableStateOf(false)
+    var isRecording by mutableStateOf(false)
 //    var currentLocation by mutableStateOf(GeoPoint(50.0, 30.0))
 
     // Obserwujemy przepływ danych z repozytorium
