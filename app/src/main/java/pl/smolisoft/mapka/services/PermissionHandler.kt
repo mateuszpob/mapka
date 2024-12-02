@@ -2,19 +2,21 @@ package pl.smolisoft.mapka.services
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import org.osmdroid.views.MapView
 
 class PermissionHandler(private val context: Context) {
 
     // Sprawdzanie uprawnień lokalizacji
     fun checkLocationPermission(
         activity: ComponentActivity,
-        mapView: MapView?,
         onPermissionGranted: () -> Unit
     ) {
         if (ActivityCompat.checkSelfPermission(
@@ -38,13 +40,25 @@ class PermissionHandler(private val context: Context) {
 
     // Sprawdzanie uprawnień do przechowywania plików
     fun checkStoragePermission(
-        requestPermissionLauncher: ActivityResultLauncher<String>
+        activity: ComponentActivity,
+        requestPermissionLauncher: ActivityResultLauncher<String>,
+        onPermissionGranted: () -> Unit
     ) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Poproś o uprawnienia do odczytu plików
-            requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!android.os.Environment.isExternalStorageManager()) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:${activity.packageName}")
+                activity.startActivity(intent)
+            } else {
+                onPermissionGranted()
+            }
+        } else {
+            val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
+            if (ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED) {
+                onPermissionGranted()
+            } else {
+                requestPermissionLauncher.launch(permission)
+            }
         }
     }
 }

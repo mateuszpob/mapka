@@ -1,16 +1,11 @@
 package pl.smolisoft.mapka
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,7 +13,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import org.osmdroid.config.Configuration
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import pl.smolisoft.mapka.services.LocationRepository
 import pl.smolisoft.mapka.services.LocationService
@@ -78,12 +72,13 @@ class MainActivity : ComponentActivity() {
             var mapView by remember { mutableStateOf<MapView?>(null) }
 
             MapViewContent(
+                permissionHandler = permissionHandler,
                 viewModel = sharedViewModel,
                 context = context,
                 mapView = mapView,
                 onMapViewInitialized = { initializedMapView ->
                     mapView = initializedMapView
-                    permissionHandler.checkLocationPermission(this, mapView) {
+                    permissionHandler.checkLocationPermission(this) {
                     }
                 },
                 startLocationService = { isLocationUpdate ->

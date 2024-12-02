@@ -1,9 +1,7 @@
 package pl.smolisoft.mapka
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import android.view.MotionEvent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
@@ -23,12 +21,14 @@ import androidx.core.content.ContextCompat
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import pl.smolisoft.mapka.services.PermissionHandler
 import pl.smolisoft.mapka.services.SharedViewModel
 import pl.smolisoft.mapka.ui.BottomBar
 import pl.smolisoft.mapka.ui.MenuContent
 
 @Composable
 fun MapViewContent(
+    permissionHandler: PermissionHandler,
     viewModel: SharedViewModel,
     context: Context,
     mapView: MapView?,
@@ -47,13 +47,10 @@ fun MapViewContent(
                 title = { Text("Menu") },
                 text = {
                     MenuContent(
+                        permissionHandler = permissionHandler,
                         context = context,
                         mapView = mapView,
-                        viewModel = viewModel,
                         onDismiss = { viewModel.isMenuOpened = false },
-                        onSettingsSelected = {
-                            // Logika po wybraniu ustawień
-                        },
                         onAnotherOptionSelected = {
                             // Logika po wybraniu innej opcji
                         }
